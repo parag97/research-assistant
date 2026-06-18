@@ -1,0 +1,13 @@
+app:
+  name: pros
+  environment: dev
+
+llm:
+  default_provider: google
+  default_model: gemini-2.5-flash-lite
+
+research:
+  max_sources: 10
+
+memory:
+  top_k: 5
