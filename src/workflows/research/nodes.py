@@ -1,7 +1,6 @@
-from core.llm.base import LLMProvider
+from core.runtime.agent_runtime import AgentRuntime
 
 from core.models.artifact import (
-    ResearchArtifact,
     ReflectionArtifact,
     FactCheckArtifact,
 )
@@ -14,6 +13,11 @@ from workflows.research.state import (
     ResearchWorkflowState,
 )
 
+from agents.research.agent import ResearchAgent
+from agents.reflection.agent import ReflectionAgent
+from agents.evaluation.agent import EvaluationAgent
+from agents.fact_check.agent import FactCheckAgent
+
 
 class ResearchNode:
     """
@@ -22,45 +26,27 @@ class ResearchNode:
 
     def __init__(
         self,
-        llm: LLMProvider,
+        runtime: AgentRuntime,
     ):
-        self.llm = llm
-
+        self.agent = ResearchAgent(runtime)
 
     async def __call__(
         self,
         state: ResearchWorkflowState,
     ):
-
-        response = await self.llm.invoke(
-            f"""
-            You are a research agent.
-
-            Research this topic:
-
-            {state["query"]}
-
-            Produce:
-            - Important facts
-            - Context
-            - Explanations
-            - Key points
-            """
-        )
-
-        current_revision = state.get(
-            "revision_count",
-            0,
+        reflection = state.get("reflection")
+        feedback = reflection.content if reflection else ""
+        print(100*"+")
+        print("+feedback: "+feedback)
+        print(100*"+")
+        response = await self.agent.run(
+            query=state["query"],
+            feedback=feedback,
         )
 
         return {
-            "research": ResearchArtifact(
-                content=response.content,
-                confidence=0.8,
-            ),
-
-            "revision_count":
-                current_revision + 1,
+            "research": response,
+            "revision_count": state.get("revision_count", 0) + 1,
         }
 
 
@@ -71,42 +57,19 @@ class ReflectionNode:
 
     def __init__(
         self,
-        llm: LLMProvider,
+        runtime: AgentRuntime,
     ):
-        self.llm = llm
-
+        self.agent = ReflectionAgent(runtime)
 
     async def __call__(
         self,
         state: ResearchWorkflowState,
     ):
-
-        response = await self.llm.invoke(
-            f"""
-            You are a reflection agent.
-
-            Critically review the research.
-
-            Find:
-            - Missing information
-            - Weak reasoning
-            - Unsupported claims
-            - Possible hallucinations
-
-
-            Research:
-
-            {state["research"].content}
-            """
+        response = await self.agent.run(
+            research_content=state["research"].content,
         )
 
-        return {
-            "reflection":
-                ReflectionArtifact(
-                    content=response.content,
-                    confidence=0.8,
-                )
-        }
+        return {"reflection": response}
 
 
 class FactCheckNode:
@@ -116,82 +79,46 @@ class FactCheckNode:
 
     def __init__(
         self,
-        llm: LLMProvider,
+        runtime: AgentRuntime,
     ):
-        self.llm = llm
-
+        self.agent = FactCheckAgent(runtime)
 
     async def __call__(
         self,
         state: ResearchWorkflowState,
     ):
+        reflection = state.get("reflection")
+        reflection_content = reflection.content if reflection else ""
 
-        response = await self.llm.invoke(
-            f"""
-            You are a fact checking agent.
-
-            Verify this research.
-
-            Check:
-            - Accuracy
-            - Unsupported statements
-            - Contradictions
-
-
-            Research:
-
-            {state["research"].content}
-
-
-            Reflection:
-
-            {state["reflection"].content}
-            """
+        response = await self.agent.run(
+            research=state["research"].content,
+            reflection=reflection_content,
         )
 
-        return {
-            "fact_check":
-                FactCheckArtifact(
-                    content=response.content,
-                    confidence=0.9,
-                )
-        }
-
-
+        return {"fact_check": response}
 
 
 class EvaluatorNode:
+    """
+    Decides whether research is ready or needs revision.
+    """
 
     def __init__(
         self,
-        llm,
+        runtime: AgentRuntime,
     ):
-        self.llm = llm
-
+        self.agent = EvaluationAgent(runtime)
 
     async def __call__(
         self,
         state: ResearchWorkflowState,
     ):
+        reflection = state.get("reflection")
+        reflection_content = reflection.content if reflection else ""
 
-        result = await self.llm.structured(
-            prompt=f"""
-            Evaluate this research.
-
-            Decide if it is ready.
-
-            Research:
-            {state["research"].content}
-
-
-            Reflection:
-            {state["reflection"].content}
-            """,
-
-            schema=EvaluationResult,
+        result = await self.agent.run(
+            research=state["research"].content,
+            reflection=reflection_content,
         )
 
-
-        return {
-            "evaluation": result
-        }
+        return {"evaluation": result}

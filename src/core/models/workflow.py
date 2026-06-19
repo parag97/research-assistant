@@ -22,3 +22,5 @@ class WorkflowState(BaseModel):
     errors: list[str] = Field(
         default_factory=list
     )
+
+
