@@ -1,4 +1,7 @@
 import time
+from typing import Type
+
+from pydantic import BaseModel
 
 from langchain_google_genai import (
     ChatGoogleGenerativeAI,
@@ -6,9 +9,12 @@ from langchain_google_genai import (
 
 from core.llm.base import LLMProvider
 from core.llm.response import LLMResponse
+from core.llm.models import LLMProviderType
 
 
-class GoogleProvider(LLMProvider):
+class GoogleProvider(
+    LLMProvider
+):
 
     def __init__(
         self,
@@ -22,22 +28,51 @@ class GoogleProvider(LLMProvider):
             google_api_key=api_key,
         )
 
+
     async def invoke(
         self,
         prompt: str,
     ) -> LLMResponse:
 
-        start_time = time.perf_counter()
+        start = time.perf_counter()
 
-        response = await self.client.ainvoke(prompt)
+        response = await self.client.ainvoke(
+            prompt
+        )
 
-        latency_ms = (
-            time.perf_counter() - start_time
+        latency = (
+            time.perf_counter()
+            -
+            start
         ) * 1000
+
 
         return LLMResponse(
             content=response.content,
             model=self.model,
-            provider="google",
-            latency_ms=round(latency_ms, 2),
+            provider=LLMProviderType.GOOGLE,
+            latency_ms=round(
+                latency,
+                2,
+            ),
+        )
+
+
+    async def structured(
+        self,
+        prompt: str,
+        schema: Type[BaseModel],
+    ) -> BaseModel:
+
+
+        structured_llm = (
+            self.client
+            .with_structured_output(
+                schema
+            )
+        )
+
+
+        return await structured_llm.ainvoke(
+            prompt
         )

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from core.llm.models import LLMProviderType
 
 
 class LLMResponse(BaseModel):
@@ -6,7 +7,7 @@ class LLMResponse(BaseModel):
 
     model: str
 
-    provider: str
+    provider: LLMProviderType
 
     latency_ms: float | None = None
 
