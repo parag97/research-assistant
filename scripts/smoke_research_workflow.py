@@ -19,8 +19,7 @@ async def main():
     result = await graph.ainvoke(
         {
             "query": (
-                "Explain how AI agents work"
-                "use planning and reflection."
+                "Explain how AI agents work be brief only 2 lines"
                 "Dont use internet"
             ),
             "revision_count": 0,
@@ -75,6 +74,8 @@ async def main():
         "\nRevision Count:",
         result["revision_count"],
     )
+
+    print(container.tracer.dump())
 
 
 if __name__ == "__main__":

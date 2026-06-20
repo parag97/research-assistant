@@ -15,6 +15,8 @@ from tools.datetime.tool import DateTimeTool
 from tools.calculator.tool import CalculatorTool
 from tools.fetch_url_tool.tool import FetchURLTool
 
+from core.observability.tracer import WorkflowTracer
+
 class Container:
 
     @cached_property
@@ -45,10 +47,15 @@ class Container:
         return registry
 
     @cached_property
+    def tracer(self):
+        return WorkflowTracer()
+
+    @cached_property
     def runtime(self):
         return AgentRuntime(
             llm=self.llm,
             tools=self.tool_registry,
+            observability=self.tracer
         )
 
     @cached_property

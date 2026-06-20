@@ -23,15 +23,25 @@ class CalculatorTool(BaseTool):
         **kwargs,
     ):
 
-        request = CalculatorInput(
-            **kwargs
-        )
+        try:
+            request = CalculatorInput(
+                **kwargs
+            )
 
-        result = eval(
-            request.expression,
-            {"__builtins__": {}},
-            {},
-        )
+            result = eval(
+                request.expression,
+                {"__builtins__": {}},
+                {},
+            )
+
+        except Exception as e:
+            return {
+                "expression":
+                    "",
+                "result":
+                    str(e),
+            }
+
 
         return {
             "expression":

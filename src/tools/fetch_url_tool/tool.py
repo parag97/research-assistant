@@ -23,13 +23,20 @@ class FetchURLTool(BaseTool):
     async def execute(self, **kwargs):
 
         input = FetchURLInput(**kwargs)        
-        with urllib.request.urlopen(input.url) as content:
-            response = content.read().decode('utf-8', errors = "ignore")
+        try:
+            with urllib.request.urlopen(input.url) as content:
+                response = content.read().decode('utf-8', errors = "ignore")
 
-        result = {
-            "url":input.url,
-            "content":response[:5000]
-        }
-
+            result = {
+                "url":input.url,
+                "content":response[:5000]
+            }
+        
+        except Exception as e:
+            print(e)
+            result = {
+                "url":input.url,
+                "content":"505 Not able to fetch"
+            }
 
         return result
