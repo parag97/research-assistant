@@ -12,6 +12,7 @@ from workflows.research.nodes import (
     ReflectionNode,
     EvaluatorNode,
     FactCheckNode,
+    FinalEvaluationNode,
 )
 
 from workflows.research.router import (
@@ -33,13 +34,15 @@ class ResearchWorkflow(
     ):
         self.container = container
 
-
     def build(self):
 
         graph = StateGraph(
             ResearchWorkflowState
         )
 
+        #
+        # Nodes
+        #
 
         graph.add_node(
             "research",
@@ -48,14 +51,12 @@ class ResearchWorkflow(
             ),
         )
 
-
         graph.add_node(
             "reflection",
             ReflectionNode(
                 self.container.reflection_agent
             ),
         )
-
 
         graph.add_node(
             "evaluation",
@@ -64,7 +65,6 @@ class ResearchWorkflow(
             ),
         )
 
-
         graph.add_node(
             "fact_check",
             FactCheckNode(
@@ -72,24 +72,35 @@ class ResearchWorkflow(
             ),
         )
 
+        graph.add_node(
+            "final_evaluation",
+            FinalEvaluationNode(
+                self.container.final_evaluation_agent
+            ),
+        )
+
+        #
+        # Main Flow
+        #
 
         graph.add_edge(
             START,
             "research",
         )
 
-
         graph.add_edge(
             "research",
             "reflection",
         )
-
 
         graph.add_edge(
             "reflection",
             "evaluation",
         )
 
+        #
+        # Revision Loop
+        #
 
         graph.add_conditional_edges(
             "evaluation",
@@ -100,11 +111,18 @@ class ResearchWorkflow(
             },
         )
 
+        #
+        # Final Validation Flow
+        #
 
         graph.add_edge(
             "fact_check",
-            END,
+            "final_evaluation",
         )
 
+        graph.add_edge(
+            "final_evaluation",
+            END,
+        )
 
         return graph.compile()

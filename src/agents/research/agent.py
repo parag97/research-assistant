@@ -29,7 +29,6 @@ class ResearchAgent:
         available_tools = (
             self.runtime.tools.descriptions()
         )
-
         prompt = TOOL_PLANNING_PROMPT.format(
             query=query,
             feedback=feedback or "No feedback available.",

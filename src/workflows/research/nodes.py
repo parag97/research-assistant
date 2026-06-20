@@ -6,6 +6,7 @@ from agents.research.agent import ResearchAgent
 from agents.reflection.agent import ReflectionAgent
 from agents.evaluation.agent import EvaluationAgent
 from agents.fact_check.agent import FactCheckAgent
+from agents.final_evaluation.agent import FinalEvaluationAgent
 
 
 class ResearchNode:
@@ -25,9 +26,6 @@ class ResearchNode:
     ):
         reflection = state.get("reflection")
         feedback = reflection.content if reflection else ""
-        print(100*"+")
-        print("+feedback: "+feedback)
-        print(100*"+")
         response = await self.agent.run(
             query=state["query"],
             feedback=feedback,
@@ -55,7 +53,7 @@ class ReflectionNode:
         state: ResearchWorkflowState,
     ):
         response = await self.agent.run(
-            research_content=state["research"].content,
+            research_artifact = state["research"],
         )
 
         return {"reflection": response}
@@ -77,11 +75,9 @@ class FactCheckNode:
         state: ResearchWorkflowState,
     ):
         reflection = state.get("reflection")
-        reflection_content = reflection.content if reflection else ""
-
         response = await self.agent.run(
-            research=state["research"].content,
-            reflection=reflection_content,
+            research=state["research"],
+            reflection = reflection,
         )
 
         return {"fact_check": response}
@@ -103,11 +99,35 @@ class EvaluatorNode:
         state: ResearchWorkflowState,
     ):
         reflection = state.get("reflection")
-        reflection_content = reflection.content if reflection else ""
 
         result = await self.agent.run(
-            research=state["research"].content,
-            reflection=reflection_content,
+            research=state["research"],
+            reflection=reflection,
         )
 
         return {"evaluation": result}
+
+
+class FinalEvaluationNode:
+    
+    """
+    Makes final decision on whether to end workflow.
+    """
+
+    def __init__(
+        self,
+        agent: FinalEvaluationAgent,
+    ):
+        self.agent = agent
+
+    async def __call__(
+        self,
+        state: ResearchWorkflowState,    
+    ):
+        response = await self.agent.run(
+            research=state["research"],
+            reflection=state["reflection"],
+            fact_check=state["fact_check"],
+        )
+        return {"final_evaluation": response}
+

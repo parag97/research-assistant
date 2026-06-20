@@ -1,9 +1,7 @@
-from core.tools.base import BaseTool
+from tools.base import BaseTool
 
 
-class EchoTool(
-    BaseTool
-):
+class EchoTool(BaseTool):
 
     @property
     def name(self):

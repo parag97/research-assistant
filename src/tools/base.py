@@ -25,12 +25,10 @@ class BaseTool(ABC):
 
 
     @property
-    def schema(self):
+    def schema(self)->dict:
 
-        return (
-            self.input_model
-            .model_json_schema()
-        )
+        return self.input_model.model_json_schema()
+        
 
 
     @abstractmethod

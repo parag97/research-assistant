@@ -1,6 +1,6 @@
 from agents.base import BaseAgent
 
-from core.models.artifact import ReflectionArtifact
+from core.models.artifact import ReflectionArtifact, ResearchArtifact
 from core.runtime.agent_runtime import AgentRuntime
 
 from agents.reflection.prompts import reflection_prompt
@@ -16,9 +16,9 @@ class ReflectionAgent(BaseAgent):
 
     async def run(
         self,
-        research_content: str,
+        research_artifact: ResearchArtifact,
     ) -> ReflectionArtifact:
-
+        research_content = research_artifact.content
         response = await self.runtime.llm.invoke(
             reflection_prompt(research_content)
         )

@@ -1,6 +1,7 @@
+from core.models.artifact import ResearchArtifact
 from agents.base import BaseAgent
 
-from core.models.artifact import FactCheckArtifact
+from core.models.artifact import FactCheckArtifact, ResearchArtifact, ReflectionArtifact
 from core.runtime.agent_runtime import AgentRuntime
 
 from agents.fact_check.prompts import fact_check_prompt
@@ -16,12 +17,14 @@ class FactCheckAgent(BaseAgent):
 
     async def run(
         self,
-        research: str,
-        reflection: str,
+        research: ResearchArtifact,
+        reflection: ReflectionArtifact,
     ) -> FactCheckArtifact:
 
+
+        reflection_content = reflection.content if reflection.content else ""
         response = await self.runtime.llm.invoke(
-            fact_check_prompt(research, reflection)
+            fact_check_prompt(research.content, reflection_content)
         )
 
         return FactCheckArtifact(

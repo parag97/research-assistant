@@ -19,12 +19,15 @@ async def main():
     result = await graph.ainvoke(
         {
             "query": (
-                "Explain how multi-agent AI systems "
+                "Explain how AI agents work"
                 "use planning and reflection."
+                "Dont use internet"
             ),
             "revision_count": 0,
         }
     )
+
+    
 
 
     print("\n========== QUERY ==========\n")
@@ -56,11 +59,17 @@ async def main():
 
 
     print("\n========== FACT CHECK ==========\n")
-
     print(
         result["fact_check"].content
     )
 
+    print("\n========== FINAL EVALUATION ==========\n")
+    print(
+        json.dumps(
+            result["final_evaluation"].model_dump(),
+            indent=2,
+        )
+    )
 
     print(
         "\nRevision Count:",

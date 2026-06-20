@@ -34,9 +34,8 @@ class SearchTool(
     ):
 
         return SearchToolInput
-    @property
-    def schema(self):
-        return self.input_model.model_json_schema()
+
+
 
     async def execute(
         self,

@@ -1,5 +1,6 @@
 from agents.base import BaseAgent
 
+from core.models.artifact import ResearchArtifact, ReflectionArtifact
 from core.models.evaluation import EvaluationResult
 from core.runtime.agent_runtime import AgentRuntime
 
@@ -16,11 +17,13 @@ class EvaluationAgent(BaseAgent):
 
     async def run(
         self,
-        research: str,
-        reflection: str,
+        research: ResearchArtifact,
+        reflection: ReflectionArtifact,
     ) -> EvaluationResult:
 
+        reflection_content = reflection.content if reflection else ""
+
         return await self.runtime.llm.structured(
-            prompt=evaluation_prompt(research, reflection),
+            prompt=evaluation_prompt(research.content, reflection_content),
             schema=EvaluationResult,
         )

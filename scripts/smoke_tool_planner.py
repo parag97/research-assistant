@@ -7,17 +7,20 @@ from core.dependencies.container import (
 from tools.models import (
     ToolPlan,
 )
+from tools.search.tool import SearchTool
 
 
 async def main():
 
     container = Container()
-
+    search_tool = SearchTool() 
+    container.tool_registry.register(search_tool)
     tools = (
         container
         .tool_registry
         .descriptions()
     )
+
 
     prompt = f"""
     Available Tools:
@@ -30,7 +33,8 @@ async def main():
 
     Return tool calls.
     """
-
+    print(tools)
+    print("*"*100)
     result = await (
         container
         .llm

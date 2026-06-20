@@ -7,6 +7,9 @@ from workflows.research.state import (
 )
 
 
+MAX_REVISIONS = 2
+
+
 def evaluation_router(
     state: ResearchWorkflowState,
 ) -> str:
@@ -18,7 +21,7 @@ def evaluation_router(
     - approve    -> continue to fact check
 
     Safety:
-    - prevents infinite reflection loops
+    - prevents infinite revision loops
     """
 
     revision_count = state.get(
@@ -35,7 +38,6 @@ def evaluation_router(
             "Evaluation missing from workflow state"
         )
 
-
     print("\n========== ROUTER ==========")
 
     print(
@@ -50,19 +52,28 @@ def evaluation_router(
         f"Score: {evaluation.score}"
     )
 
+    print(
+        f"Approved: {evaluation.approved}"
+    )
+
     print("============================\n")
 
+    #
+    # Safety Guard
+    #
 
-    # Safety guard:
-    # Never allow endless agent loops
-    if revision_count >= 2:
+    if revision_count >= MAX_REVISIONS:
 
         print(
-            "Max revisions reached. Moving to fact check."
+            "Maximum revisions reached. "
+            "Proceeding to Fact Check."
         )
 
         return "fact_check"
 
+    #
+    # Revision Required
+    #
 
     if (
         evaluation.decision
@@ -71,11 +82,14 @@ def evaluation_router(
     ):
 
         print(
-            "Research needs improvement. Sending back to Research Agent."
+            "Research requires revision."
         )
 
         return "research"
 
+    #
+    # Approved
+    #
 
     if (
         evaluation.decision
@@ -84,12 +98,12 @@ def evaluation_router(
     ):
 
         print(
-            "Research approved. Moving to Fact Check."
+            "Research approved."
         )
 
         return "fact_check"
 
-
     raise ValueError(
-        f"Unknown evaluation decision: {evaluation.decision}"
+        f"Unknown evaluation decision: "
+        f"{evaluation.decision}"
     )
