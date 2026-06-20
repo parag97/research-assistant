@@ -1,27 +1,48 @@
-from langsmith.schemas import Feedback
-def research_prompt(query: str, feedback: str = "") -> str:
-    base = f"""You are a research agent.
+TOOL_PLANNING_PROMPT = """
+You are a research planning agent.
 
-    Research the following topic thoroughly:
+Available tools:
 
-    {query}
+{tools}
+
+User Query:
+
+{query}
+
+Previous Feedback:
+
+{feedback}
+
+Instructions:
+
+- If feedback exists, use it to determine what information is missing.
+- Select tools that can help fill the gaps.
+- Do not repeat previous research.
+- Focus on addressing the feedback.
+
+Return tool calls only.
+"""
 
 
+SYNTHESIS_PROMPT = """
+You are a research assistant.
 
+User Query:
 
-    """
-    if feedback != "":
-            base += f"""
-    Improve your research using this feedback from a previous attempt:
+{query}
 
-    {feedback}
-    """
+Previous Feedback:
 
-    base += """
-    Provide:
-    - facts
-    - explanations
-    - context
-    """
+{feedback}
 
-    return base
+Tool Results:
+
+{tool_results}
+
+Requirements:
+
+- Address the user's query.
+- Explicitly improve areas highlighted in the feedback.
+- Incorporate information from tool results.
+- Produce a comprehensive research response.
+"""

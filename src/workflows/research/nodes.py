@@ -1,14 +1,3 @@
-from core.runtime.agent_runtime import AgentRuntime
-
-from core.models.artifact import (
-    ReflectionArtifact,
-    FactCheckArtifact,
-)
-
-from core.models.evaluation import (
-    EvaluationResult,
-)
-
 from workflows.research.state import (
     ResearchWorkflowState,
 )
@@ -26,9 +15,9 @@ class ResearchNode:
 
     def __init__(
         self,
-        runtime: AgentRuntime,
+        agent: ResearchAgent,
     ):
-        self.agent = ResearchAgent(runtime)
+        self.agent = agent
 
     async def __call__(
         self,
@@ -57,9 +46,9 @@ class ReflectionNode:
 
     def __init__(
         self,
-        runtime: AgentRuntime,
+        agent: ReflectionAgent,
     ):
-        self.agent = ReflectionAgent(runtime)
+        self.agent = agent
 
     async def __call__(
         self,
@@ -79,9 +68,9 @@ class FactCheckNode:
 
     def __init__(
         self,
-        runtime: AgentRuntime,
+        agent: FactCheckAgent,
     ):
-        self.agent = FactCheckAgent(runtime)
+        self.agent = agent
 
     async def __call__(
         self,
@@ -105,9 +94,9 @@ class EvaluatorNode:
 
     def __init__(
         self,
-        runtime: AgentRuntime,
+        agent :EvaluationAgent,
     ):
-        self.agent = EvaluationAgent(runtime)
+        self.agent = agent
 
     async def __call__(
         self,

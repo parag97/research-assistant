@@ -44,7 +44,7 @@ class ResearchWorkflow(
         graph.add_node(
             "research",
             ResearchNode(
-                self.container.runtime
+                self.container.research_agent
             ),
         )
 
@@ -52,7 +52,7 @@ class ResearchWorkflow(
         graph.add_node(
             "reflection",
             ReflectionNode(
-                self.container.runtime
+                self.container.reflection_agent
             ),
         )
 
@@ -60,7 +60,7 @@ class ResearchWorkflow(
         graph.add_node(
             "evaluation",
             EvaluatorNode(
-                self.container.runtime
+                self.container.evaluation_agent
             ),
         )
 
@@ -68,7 +68,7 @@ class ResearchWorkflow(
         graph.add_node(
             "fact_check",
             FactCheckNode(
-                self.container.runtime
+                self.container.fact_check_agent
             ),
         )
 

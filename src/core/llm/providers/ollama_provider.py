@@ -51,3 +51,7 @@ class OllamaProvider(LLMProvider):
         structured_llm = self.client.with_structured_output(schema)
 
         return await structured_llm.ainvoke(prompt)
+    def invoke_with_tools(self, query, tools):
+        
+        return self.client.invoke_with_tools()
+        

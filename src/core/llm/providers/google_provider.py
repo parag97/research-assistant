@@ -76,3 +76,7 @@ class GoogleProvider(
         return await structured_llm.ainvoke(
             prompt
         )
+
+    def invoke_with_tools(self, query, tools):
+        
+        return self.client.invoke_with_tools()

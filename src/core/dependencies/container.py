@@ -1,6 +1,7 @@
 from functools import cached_property
 from core.llm.factory import get_llm
 from core.runtime.agent_runtime import AgentRuntime
+from tools.registry import ToolRegistry
 
 from agents.research.agent import ResearchAgent
 from agents.reflection.agent import ReflectionAgent
@@ -39,7 +40,11 @@ class Container:
         return EvaluationAgent(
             self.runtime
         )
-
+    @cached_property
+    def tool_registory(self):
+        return ToolRegistry(
+            runtime=self.runtime
+        )
     @cached_property
     def fact_check_agent(self):
         return FactCheckAgent(
