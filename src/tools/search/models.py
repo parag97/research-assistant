@@ -1,12 +1,9 @@
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
-class SearchToolInput(
-    BaseModel
-):
+class SearchToolInput(BaseModel):
+    """Input model for SearchTool."""
 
     query: str = Field(
-        description=
-        "Search query"
+        description="The search query to look up information about."
     )

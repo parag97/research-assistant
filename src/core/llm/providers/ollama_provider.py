@@ -2,46 +2,43 @@ import time
 from typing import Type
 
 from pydantic import BaseModel
-
 from langchain_ollama import ChatOllama
 
 from core.llm.base import LLMProvider
-from core.llm.response import LLMResponse
 from core.llm.models import LLMProviderType
+from core.llm.response import LLMResponse
 from tools.base import BaseTool
-from tools.models import ToolPlan, ToolCall
+from tools.models import ToolCall, ToolPlan
 
 
 class OllamaProvider(LLMProvider):
+    """
+    LLMProvider implementation backed by a local Ollama instance.
+
+    Supports plain text generation, structured output via JSON schema,
+    and tool-call binding using LangChain's bind_tools interface.
+    """
 
     def __init__(
         self,
         model: str,
         base_url: str = "http://localhost:11434",
-    ):
+    ) -> None:
         self.model = model
+        self.client = ChatOllama(model=model, base_url=base_url)
 
-        self.client = ChatOllama(
-            model=model,
-            base_url=base_url,
-        )
-
-    async def invoke(
-        self,
-        prompt: str,
-    ) -> LLMResponse:
+    async def invoke(self, prompt: str) -> LLMResponse:
+        """Send a plain text prompt and return a normalised LLMResponse."""
 
         start = time.perf_counter()
-
         response = await self.client.ainvoke(prompt)
-
-        latency = (time.perf_counter() - start) * 1000
+        latency_ms = (time.perf_counter() - start) * 1000
 
         return LLMResponse(
             content=response.content,
             model=self.model,
             provider=LLMProviderType.OLLAMA,
-            latency_ms=round(latency, 2),
+            latency_ms=round(latency_ms, 2),
         )
 
     async def structured(
@@ -49,9 +46,12 @@ class OllamaProvider(LLMProvider):
         prompt: str,
         schema: Type[BaseModel],
     ) -> BaseModel:
+        """
+        Send a prompt and parse the response into a Pydantic schema.
+        Uses LangChain's with_structured_output for JSON enforcement.
+        """
 
         structured_llm = self.client.with_structured_output(schema)
-
         return await structured_llm.ainvoke(prompt)
 
     async def invoke_with_tools(
@@ -59,6 +59,10 @@ class OllamaProvider(LLMProvider):
         prompt: str,
         tools: list[BaseTool],
     ) -> ToolPlan:
+        """
+        Send a prompt with tool definitions and return a ToolPlan.
+        Uses LangChain's bind_tools to pass OpenAI-style function schemas.
+        """
 
         tool_schemas = [
             {
@@ -73,14 +77,10 @@ class OllamaProvider(LLMProvider):
         ]
 
         client_with_tools = self.client.bind_tools(tool_schemas)
-
         response = await client_with_tools.ainvoke(prompt)
 
         tool_calls = [
-            ToolCall(
-                tool_name=tc["name"],
-                arguments=tc["args"],
-            )
+            ToolCall(tool_name=tc["name"], arguments=tc["args"])
             for tc in (response.tool_calls or [])
         ]
 

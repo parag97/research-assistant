@@ -7,7 +7,6 @@ app = FastAPI(
 
 
 @app.get("/health")
-async def health():
-    return {
-        "status": "ok"
-    }
+async def health() -> dict:
+    """Liveness probe — returns 200 OK when the service is running."""
+    return {"status": "ok"}

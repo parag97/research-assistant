@@ -9,6 +9,12 @@ from core.settings.provider_settings import ProviderSettings
 
 @cache
 def get_llm():
+    """
+    Instantiate and cache the configured LLM provider.
+
+    Provider and model are read from the active Config.
+    API keys are read from ProviderSettings (environment / .env file).
+    """
 
     config = get_config()
     settings = ProviderSettings()
@@ -23,8 +29,7 @@ def get_llm():
     if provider == LLMProviderType.OLLAMA:
         return OllamaProvider(
             model=config.llm.default_model,
+            base_url=config.llm.ollama_base_url,
         )
 
-    raise ValueError(
-        f"Unsupported provider: {provider}"
-    )
+    raise ValueError(f"Unsupported LLM provider: {provider}")

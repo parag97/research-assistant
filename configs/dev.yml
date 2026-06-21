@@ -1,13 +1,28 @@
 app:
-  name: pros
+  name: research-assistant
   environment: dev
 
 llm:
   default_provider: ollama
   default_model: qwen2.5:7b
+  ollama_base_url: http://localhost:11434
+
+agent:
+  max_retries: 3
+  structured_retries: 4
+  retry_backoff: 1.0
+  research_confidence: 0.8
+  reflection_confidence: 0.8
+  fact_check_confidence: 0.9
+
+workflow:
+  max_revisions: 2
 
 research:
   max_sources: 10
 
 memory:
   top_k: 5
+
+tools:
+  fetch_url_max_chars: 5000

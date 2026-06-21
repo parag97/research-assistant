@@ -2,7 +2,8 @@ from pydantic import BaseModel, Field
 
 
 class FetchURLInput(BaseModel):
-    
-    url: str = Field(default=None, description="The URL to fetch")
+    """Input model for FetchURLTool."""
 
-    depth: int = Field(1, description="The depth to fetch")
+    url: str = Field(
+        description="The fully-qualified URL to fetch (must start with http:// or https://)."
+    )
