@@ -19,7 +19,7 @@ from core.dependencies.container import Container
 
 async def main() -> None:
 
-    container = Container()
+    container = Container("research agent")
 
     # Use the pre-built workflow from the container so the same
     # config-driven wiring is exercised as in production.
@@ -28,7 +28,7 @@ async def main() -> None:
     result = await graph.ainvoke(
         {
             "query": (
-                "Explain how multi-agent AI systems "
+                "Explain how multi-agent AI systems, be very brief, answer quickly, no more then 2 lines "
                 "use planning and reflection."
             ),
             "revision_count": 0,

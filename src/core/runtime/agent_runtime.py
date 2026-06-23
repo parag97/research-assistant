@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
 from core.llm.base import LLMProvider
-from core.observability.tracer import WorkflowTracer
+from core.observability.tracer import PremitiveWorkflowTracer
+from core.observability.tracer import Tracer
 from tools.registry import ToolRegistry
 
 
@@ -25,7 +26,9 @@ class AgentRuntime:
 
     llm: LLMProvider
     tools: ToolRegistry
-    observability: WorkflowTracer
+    # observability: PremitiveWorkflowTracer
+    tracer: Tracer
+
 
     # Placeholders for future capabilities
     memory: object | None = None

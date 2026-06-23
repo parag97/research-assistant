@@ -1,9 +1,11 @@
+from core.observability.setup import create_tracer
 from functools import cached_property
 
 from core.config.service import get_config
 from core.llm.factory import get_llm
 from core.runtime.agent_runtime import AgentRuntime
-from core.observability.tracer import WorkflowTracer
+from core.observability.tracer import PremitiveWorkflowTracer
+from core.observability.tracer import Tracer
 from tools.registry import ToolRegistry
 
 from tools.datetime.tool import DateTimeTool
@@ -18,6 +20,9 @@ from agents.final_evaluation.agent import FinalEvaluationAgent
 
 from workflows.research.workflow import ResearchWorkflow
 
+from core.observability.setup import create_tracer
+
+
 
 class Container:
     """
@@ -28,6 +33,8 @@ class Container:
     config object — only plain primitives and domain objects.
     """
 
+    def __init__(self, service_name: str):
+        self.service_name = service_name
     # ------------------------------------------------------------------
     # Config (read once, used throughout)
     # ------------------------------------------------------------------
@@ -46,7 +53,9 @@ class Container:
 
     @cached_property
     def tracer(self):
-        return WorkflowTracer()
+        # return PremitiveWorkflowTracer()
+        tracer = create_tracer(service_name = self.service_name)
+        return tracer
 
     @cached_property
     def tool_registry(self):
@@ -63,7 +72,7 @@ class Container:
         return AgentRuntime(
             llm=self.llm,
             tools=self.tool_registry,
-            observability=self.tracer,
+            tracer=self.tracer,
         )
 
     # ------------------------------------------------------------------

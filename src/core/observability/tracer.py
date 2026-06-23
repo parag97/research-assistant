@@ -1,7 +1,29 @@
 from core.observability.model import TraceEvent
+from opentelemetry import trace
 
 
-class WorkflowTracer:
+class Tracer:
+
+    def __init__(
+        self,
+        service_name: str,
+    ):
+        self._tracer = (
+            trace.get_tracer(
+                service_name
+            )
+        )
+
+    def span(
+        self,
+        name: str,
+    ):
+        return self._tracer.start_as_current_span(
+            name
+        )
+
+
+class PremitiveWorkflowTracer:
     """
     In-memory store for TraceEvents emitted during a workflow run.
 

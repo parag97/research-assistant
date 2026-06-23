@@ -4,6 +4,7 @@ from core.config.service import get_config
 from core.llm.models import LLMProviderType
 from core.llm.providers.google_provider import GoogleProvider
 from core.llm.providers.ollama_provider import OllamaProvider
+from core.llm.providers.open_router_provider import OpenRouterProvider
 from core.settings.provider_settings import ProviderSettings
 
 
@@ -30,6 +31,11 @@ def get_llm():
         return OllamaProvider(
             model=config.llm.default_model,
             base_url=config.llm.ollama_base_url,
+        )
+    if provider == LLMProviderType.OPEN_ROUTER:
+        return  OpenRouterProvider(
+            model=config.llm.default_model,
+            api_key=settings.open_router_api_key,
         )
 
     raise ValueError(f"Unsupported LLM provider: {provider}")

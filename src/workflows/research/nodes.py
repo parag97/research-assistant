@@ -1,6 +1,6 @@
 import logging
 
-from core.observability.decorators import tracer_node
+from core.observability.decorators import trace_node
 from core.models.artifact import ReflectionArtifact, FactCheckArtifact
 
 from workflows.research.state import ResearchWorkflowState
@@ -26,7 +26,7 @@ class ResearchNode:
     def __init__(self, agent: ResearchAgent) -> None:
         self.agent = agent
 
-    @tracer_node("ResearchNode")
+    @trace_node("ResearchNode")
     async def __call__(
         self,
         state: ResearchWorkflowState,
@@ -69,7 +69,7 @@ class ReflectionNode:
     def __init__(self, agent: ReflectionAgent) -> None:
         self.agent = agent
 
-    @tracer_node("ReflectionNode")
+    @trace_node("ReflectionNode")
     async def __call__(
         self,
         state: ResearchWorkflowState,
@@ -114,7 +114,7 @@ class EvaluatorNode:
     def __init__(self, agent: EvaluationAgent) -> None:
         self.agent = agent
 
-    @tracer_node("EvaluatorNode")
+    @trace_node("EvaluatorNode")
     async def __call__(
         self,
         state: ResearchWorkflowState,
@@ -153,7 +153,7 @@ class FactCheckNode:
     def __init__(self, agent: FactCheckAgent) -> None:
         self.agent = agent
 
-    @tracer_node("FactCheckNode")
+    @trace_node("FactCheckNode")
     async def __call__(
         self,
         state: ResearchWorkflowState,
@@ -199,7 +199,7 @@ class FinalEvaluationNode:
     def __init__(self, agent: FinalEvaluationAgent) -> None:
         self.agent = agent
 
-    @tracer_node("FinalEvaluationNode")
+    @trace_node("FinalEvaluationNode")
     async def __call__(
         self,
         state: ResearchWorkflowState,

@@ -12,6 +12,8 @@ class ProviderSettings(BaseSettings):
 
     anthropic_api_key: str | None = None
 
+    open_router_api_key: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

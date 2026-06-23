@@ -66,10 +66,12 @@ class ResearchAgent:
 
         for attempt in range(1, self._structured_retries + 1):
             try:
-                return await self.runtime.llm.structured(
-                    prompt=prompt,
-                    schema=ToolPlan,
-                )
+                
+                with self.runtime.tracer.span("ToolPlanning"):
+                    return await self.runtime.llm.structured(
+                        prompt=prompt,
+                        schema=ToolPlan,
+                    )
             except Exception as exc:
                 last_exc = exc
                 logger.warning(
@@ -98,14 +100,16 @@ class ResearchAgent:
             return []
 
         async def _run_one(tool_call):
-            try:
-                tool = self.runtime.tools.get(tool_call.tool_name)
-                return await tool.execute(**tool_call.arguments)
-            except Exception as exc:
-                logger.warning("Tool '%s' failed: %s", tool_call.tool_name, exc)
-                return {"tool": tool_call.tool_name, "error": str(exc)}
-
-        return await asyncio.gather(*[_run_one(tc) for tc in plan.tool_calls])
+            with self.runtime.tracer.span(f"Tool:{tool_call.tool_name}"):
+                try:
+                    tool = self.runtime.tools.get(tool_call.tool_name)
+                    return await tool.execute(**tool_call.arguments)
+                except Exception as exc:
+                    logger.warning("Tool '%s' failed: %s", tool_call.tool_name, exc)
+                    return {"tool": tool_call.tool_name, "error": str(exc)}
+        
+        with self.runtime.tracer.span("ToolExecution"):
+            return await asyncio.gather(*[_run_one(tc) for tc in plan.tool_calls])
 
     async def _synthesize(
         self,
@@ -128,7 +132,8 @@ class ResearchAgent:
 
         for attempt in range(1, self._max_retries + 1):
             try:
-                return await self.runtime.llm.invoke(prompt)
+                with self.runtime.tracer.span("Synthesis"):
+                    return await self.runtime.llm.invoke(prompt)
             except Exception as exc:
                 last_exc = exc
                 logger.warning(
@@ -159,23 +164,25 @@ class ResearchAgent:
         query    : The research question.
         feedback : Optional critique from a previous reflection pass.
         """
+        with self.runtime.tracer.span(
+            "ResearchAgent"
+        ):
+            # Step 1: decide which tools to call
+            plan = await self._plan_tools(query=query, feedback=feedback)
+            logger.debug("Tool plan: %s", plan.model_dump_json(indent=2))
 
-        # Step 1: decide which tools to call
-        plan = await self._plan_tools(query=query, feedback=feedback)
-        logger.debug("Tool plan: %s", plan.model_dump_json(indent=2))
+            # Step 2: execute all tool calls concurrently
+            tool_results = await self._execute_tools(plan)
+            logger.debug("Tool results: %s", json.dumps(tool_results, indent=2))
 
-        # Step 2: execute all tool calls concurrently
-        tool_results = await self._execute_tools(plan)
-        logger.debug("Tool results: %s", json.dumps(tool_results, indent=2))
+            # Step 3: synthesise research from tool outputs
+            response = await self._synthesize(
+                query=query,
+                feedback=feedback,
+                tool_results=tool_results,
+            )
 
-        # Step 3: synthesise research from tool outputs
-        response = await self._synthesize(
-            query=query,
-            feedback=feedback,
-            tool_results=tool_results,
-        )
-
-        return ResearchArtifact(
-            content=response.content,
-            confidence=self._confidence,
-        )
+            return ResearchArtifact(
+                content=response.content,
+                confidence=self._confidence,
+            )

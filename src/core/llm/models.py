@@ -13,3 +13,4 @@ class LLMProviderType(str, Enum):
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OLLAMA = "ollama"
+    OPEN_ROUTER = "open_router"
