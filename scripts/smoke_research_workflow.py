@@ -63,13 +63,13 @@ async def main() -> None:
     # Print the observability trace
     # ------------------------------------------------------------------
 
-    print("\n========== TRACE ==========\n")
-    for event in container.tracer.dump():
-        print(
-            f"[{event.status.upper()}] {event.node_name} "
-            f"— {event.duration_ms:.0f}ms"
-            + (f" — {event.error}" if event.error else "")
-        )
+    # print("\n========== TRACE ==========\n")
+    # for event in container.tracer.dump():
+    #     print(
+    #         f"[{event.status.upper()}] {event.node_name} "
+    #         f"— {event.duration_ms:.0f}ms"
+    #         + (f" — {event.error}" if event.error else "")
+    #     )
 
     # Report any non-fatal errors accumulated in state
     errors = result.get("errors") or []

@@ -14,6 +14,15 @@ class ProviderSettings(BaseSettings):
 
     open_router_api_key: str | None = None
 
+    # ------------------------------------------------------------------
+    # Langfuse OTLP credentials
+    # Langfuse exposes a standard OTLP/HTTP endpoint for traces.
+    # Auth is HTTP Basic: base64(public_key:secret_key) in the header.
+    # ------------------------------------------------------------------
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,11 +1,10 @@
-from core.observability.setup import create_tracer
 from functools import cached_property
 
 from core.config.service import get_config
 from core.llm.factory import get_llm
 from core.runtime.agent_runtime import AgentRuntime
-from core.observability.tracer import PremitiveWorkflowTracer
-from core.observability.tracer import Tracer
+from core.observability.setup import create_tracer       # single import, no duplicate
+from core.observability.tracer import PrimitiveWorkflowTracer, Tracer
 from tools.registry import ToolRegistry
 
 from tools.datetime.tool import DateTimeTool
@@ -20,9 +19,6 @@ from agents.final_evaluation.agent import FinalEvaluationAgent
 
 from workflows.research.workflow import ResearchWorkflow
 
-from core.observability.setup import create_tracer
-
-
 
 class Container:
     """
@@ -31,10 +27,16 @@ class Container:
     Reads the active Config once and distributes individual parameter
     values to each object it constructs. Nothing downstream receives a
     config object — only plain primitives and domain objects.
+
+    Lifecycle
+    ---------
+    Create one Container per process. Call `shutdown()` before the
+    process exits to flush any buffered spans to Langfuse.
     """
 
     def __init__(self, service_name: str):
         self.service_name = service_name
+
     # ------------------------------------------------------------------
     # Config (read once, used throughout)
     # ------------------------------------------------------------------
@@ -47,12 +49,13 @@ class Container:
     # Infrastructure
     # ------------------------------------------------------------------
 
-
     @cached_property
-    def tracer(self):
-        # return PremitiveWorkflowTracer()
-        tracer = create_tracer(service_name = self.service_name)
-        return tracer
+    def tracer(self) -> Tracer:
+        # create_tracer() registers the global OTel TracerProvider and
+        # returns our thin Tracer wrapper. Called once; cached_property
+        # ensures the provider is only registered a single time even if
+        # something accesses container.tracer multiple times.
+        return create_tracer(service_name=self.service_name)
 
     @cached_property
     def llm(self):
@@ -143,3 +146,27 @@ class Container:
             final_evaluation_agent=self.final_evaluation_agent,
             max_revisions=self._config.workflow.max_revisions,
         )
+
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
+
+    def shutdown(self) -> None:
+        """
+        Flush buffered spans and shut down the TracerProvider.
+
+        BatchSpanProcessor holds spans in a queue and exports them in the
+        background. Without an explicit shutdown() call, any spans still
+        in the queue when the process exits are silently dropped and will
+        never appear in Langfuse.
+
+        Call this in your FastAPI lifespan `finally` block or at the end
+        of your main() function:
+
+            container = Container("research-assistant")
+            try:
+                await container.research_workflow.run(...)
+            finally:
+                container.shutdown()
+        """
+        Tracer.shutdown()
