@@ -9,7 +9,7 @@ from core.settings.provider_settings import ProviderSettings
 
 
 @cache
-def get_llm():
+def get_llm(tracer):
     """
     Instantiate and cache the configured LLM provider.
 
@@ -21,21 +21,26 @@ def get_llm():
     settings = ProviderSettings()
     provider = config.llm.default_provider
 
+    if provider == LLMProviderType.OPEN_ROUTER:
+        return  OpenRouterProvider(
+            model=config.llm.default_model,
+            api_key=settings.open_router_api_key,
+            tracer = tracer
+        )
+    
+    
     if provider == LLMProviderType.GOOGLE:
         return GoogleProvider(
             model=config.llm.default_model,
             api_key=settings.google_api_key,
+            tracer = tracer
         )
 
     if provider == LLMProviderType.OLLAMA:
         return OllamaProvider(
             model=config.llm.default_model,
             base_url=config.llm.ollama_base_url,
-        )
-    if provider == LLMProviderType.OPEN_ROUTER:
-        return  OpenRouterProvider(
-            model=config.llm.default_model,
-            api_key=settings.open_router_api_key,
+            tracer = tracer
         )
 
     raise ValueError(f"Unsupported LLM provider: {provider}")

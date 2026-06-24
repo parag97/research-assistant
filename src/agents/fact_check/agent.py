@@ -49,26 +49,29 @@ class FactCheckAgent(BaseAgent):
         reflection : The reflection critique to cross-reference (may be None).
         """
 
-        reflection_content = reflection.content if reflection else ""
-        prompt = fact_check_prompt(research.content, reflection_content)
-        last_exc: Exception | None = None
+        with self.runtime.tracer.span("FactCheckAgent") as span:
+            span.set_attribute("agnent.name", "fact_check")
+            reflection_content = reflection.content if reflection else ""
+            prompt = fact_check_prompt(research.content, reflection_content)
+            last_exc: Exception | None = None
 
-        for attempt in range(1, self._max_retries + 1):
-            try:
-                response = await self.runtime.llm.invoke(prompt)
-                return FactCheckArtifact(
-                    content=response.content,
-                    confidence=self._confidence,
-                )
-            except Exception as exc:
-                last_exc = exc
-                logger.warning(
-                    "Fact-check attempt %d/%d failed: %s",
-                    attempt, self._max_retries, exc,
-                )
-                if attempt < self._max_retries:
-                    await asyncio.sleep(self._retry_backoff * attempt)
+            for attempt in range(1, self._max_retries + 1):
+                try:
+                    with self.runtime.tracer.span("FactCheck"):
+                        response = await self.runtime.llm.invoke(prompt)
+                    return FactCheckArtifact(
+                        content=response.content,
+                        confidence=self._confidence,
+                    )
+                except Exception as exc:
+                    last_exc = exc
+                    logger.warning(
+                        "Fact-check attempt %d/%d failed: %s",
+                        attempt, self._max_retries, exc,
+                    )
+                    if attempt < self._max_retries:
+                        await asyncio.sleep(self._retry_backoff * attempt)
 
-        raise RuntimeError(
-            f"Fact-check failed after {self._max_retries} attempts."
-        ) from last_exc
+            raise RuntimeError(
+                f"Fact-check failed after {self._max_retries} attempts."
+            ) from last_exc

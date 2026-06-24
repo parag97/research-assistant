@@ -166,7 +166,8 @@ class ResearchAgent:
         """
         with self.runtime.tracer.span(
             "ResearchAgent"
-        ):
+        ) as span:
+            span.set_attribute("agnent.name", "research")
             # Step 1: decide which tools to call
             plan = await self._plan_tools(query=query, feedback=feedback)
             logger.debug("Tool plan: %s", plan.model_dump_json(indent=2))

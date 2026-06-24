@@ -47,15 +47,16 @@ class Container:
     # Infrastructure
     # ------------------------------------------------------------------
 
-    @cached_property
-    def llm(self):
-        return get_llm()
 
     @cached_property
     def tracer(self):
         # return PremitiveWorkflowTracer()
         tracer = create_tracer(service_name = self.service_name)
         return tracer
+
+    @cached_property
+    def llm(self):
+        return get_llm(self.tracer)
 
     @cached_property
     def tool_registry(self):

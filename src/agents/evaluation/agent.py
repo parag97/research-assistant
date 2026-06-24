@@ -47,25 +47,28 @@ class EvaluationAgent(BaseAgent):
         reflection : The corresponding reflection (may be None on first pass).
         """
 
-        reflection_content = reflection.content if reflection else ""
-        prompt = evaluation_prompt(research.content, reflection_content)
-        last_exc: Exception | None = None
+        with self.runtime.tracer.span("EvaluationAgent") as span:
+            span.set_attribute("agnent.name", "evaluation")
+            reflection_content = reflection.content if reflection else ""
+            prompt = evaluation_prompt(research.content, reflection_content)
+            last_exc: Exception | None = None
 
-        for attempt in range(1, self._max_retries + 1):
-            try:
-                return await self.runtime.llm.structured(
-                    prompt=prompt,
-                    schema=EvaluationResult,
-                )
-            except Exception as exc:
-                last_exc = exc
-                logger.warning(
-                    "Evaluation attempt %d/%d failed: %s",
-                    attempt, self._max_retries, exc,
-                )
-                if attempt < self._max_retries:
-                    await asyncio.sleep(self._retry_backoff * attempt)
+            for attempt in range(1, self._max_retries + 1):
+                try:
+                    with self.runtime.tracer.span("Evaluation"):
+                        return await self.runtime.llm.structured(
+                            prompt=prompt,
+                            schema=EvaluationResult,
+                        )
+                except Exception as exc:
+                    last_exc = exc
+                    logger.warning(
+                        "Evaluation attempt %d/%d failed: %s",
+                        attempt, self._max_retries, exc,
+                    )
+                    if attempt < self._max_retries:
+                        await asyncio.sleep(self._retry_backoff * attempt)
 
-        raise RuntimeError(
-            f"Evaluation failed after {self._max_retries} attempts."
-        ) from last_exc
+            raise RuntimeError(
+                f"Evaluation failed after {self._max_retries} attempts."
+            ) from last_exc

@@ -54,29 +54,32 @@ class FinalEvaluationAgent(BaseAgent):
         fact_check : The fact-checking report.
         """
 
-        prompt = final_evaluation_prompt(
-            research.content,
-            reflection.content,
-            fact_check.content,
-        )
+        with self.runtime.tracer.span("FinalEvaluationAgent") as span:
+            span.set_attribute("agnent.name", "final_evaluation")
+            prompt = final_evaluation_prompt(
+                research.content,
+                reflection.content,
+                fact_check.content,
+            )
 
-        last_exc: Exception | None = None
+            last_exc: Exception | None = None
 
-        for attempt in range(1, self._max_retries + 1):
-            try:
-                return await self.runtime.llm.structured(
-                    prompt=prompt,
-                    schema=FinalEvaluationResult,
-                )
-            except Exception as exc:
-                last_exc = exc
-                logger.warning(
-                    "Final evaluation attempt %d/%d failed: %s",
-                    attempt, self._max_retries, exc,
-                )
-                if attempt < self._max_retries:
-                    await asyncio.sleep(self._retry_backoff * attempt)
+            for attempt in range(1, self._max_retries + 1):
+                try:
+                    with self.runtime.tracer.span("FinalEvaluation"):
+                        return await self.runtime.llm.structured(
+                            prompt=prompt,
+                            schema=FinalEvaluationResult,
+                        )
+                except Exception as exc:
+                    last_exc = exc
+                    logger.warning(
+                        "Final evaluation attempt %d/%d failed: %s",
+                        attempt, self._max_retries, exc,
+                    )
+                    if attempt < self._max_retries:
+                        await asyncio.sleep(self._retry_backoff * attempt)
 
-        raise RuntimeError(
-            f"Final evaluation failed after {self._max_retries} attempts."
-        ) from last_exc
+            raise RuntimeError(
+                f"Final evaluation failed after {self._max_retries} attempts."
+            ) from last_exc

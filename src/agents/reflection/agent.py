@@ -42,25 +42,28 @@ class ReflectionAgent(BaseAgent):
         research_artifact : The research artifact to critique.
         """
 
-        prompt = reflection_prompt(research_artifact.content)
-        last_exc: Exception | None = None
+        with self.runtime.tracer.span("ReflectionAgent") as span:
+            span.set_attribute("agnent.name", "reflection")
+            prompt = reflection_prompt(research_artifact.content)
+            last_exc: Exception | None = None
 
-        for attempt in range(1, self._max_retries + 1):
-            try:
-                response = await self.runtime.llm.invoke(prompt)
-                return ReflectionArtifact(
-                    content=response.content,
-                    confidence=self._confidence,
-                )
-            except Exception as exc:
-                last_exc = exc
-                logger.warning(
-                    "Reflection attempt %d/%d failed: %s",
-                    attempt, self._max_retries, exc,
-                )
-                if attempt < self._max_retries:
-                    await asyncio.sleep(self._retry_backoff * attempt)
+            for attempt in range(1, self._max_retries + 1):
+                try:
+                    with self.runtime.tracer.span("Reflection"):
+                        response = await self.runtime.llm.invoke(prompt)
+                    return ReflectionArtifact(
+                        content=response.content,
+                        confidence=self._confidence,
+                    )
+                except Exception as exc:
+                    last_exc = exc
+                    logger.warning(
+                        "Reflection attempt %d/%d failed: %s",
+                        attempt, self._max_retries, exc,
+                    )
+                    if attempt < self._max_retries:
+                        await asyncio.sleep(self._retry_backoff * attempt)
 
-        raise RuntimeError(
-            f"Reflection failed after {self._max_retries} attempts."
-        ) from last_exc
+            raise RuntimeError(
+                f"Reflection failed after {self._max_retries} attempts."
+            ) from last_exc
